@@ -16,7 +16,7 @@ func main() {
 		Name: "publishTweet",
 		Help: "Publishes a tweet",
 		Func: func(c *ishell.Context) {
-
+			var err error;
 			defer c.ShowPrompt(true)
 
 			c.Print("Write your username: ")
@@ -30,9 +30,13 @@ func main() {
 			newTweet := domain.NewTweet(user, text)
 
 			
-			service.PublishTweet(newTweet)
+			err = service.PublishTweet(newTweet)
 
-			c.Print("Tweet sent\n")
+			if err != nil{
+				c.Print(err.Error())
+			} else{
+				c.Print("Tweet sent\n")
+			}
 
 			return
 		},
@@ -47,7 +51,11 @@ func main() {
 
 			tweet := service.GetTweet()
 
-			c.Println(tweet.User, tweet.Text, tweet.Date)
+			if tweet != nil {
+				c.Println(tweet.User, tweet.Text, tweet.Date)
+			} else{
+				c.Println("No hay tweets creados.")
+			}
 
 			return
 		},
