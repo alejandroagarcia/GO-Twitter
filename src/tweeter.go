@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/abiosoft/ishell"
 	"github.com/alejandroagarcia/GO-Twitter/src/service"
+	"github.com/alejandroagarcia/GO-Twitter/src/domain"
 )
 
 func main() {
@@ -18,11 +19,18 @@ func main() {
 
 			defer c.ShowPrompt(true)
 
+			c.Print("Write your username: ")
+
+			user := c.ReadLine()
+
 			c.Print("Write your tweet: ")
 
-			tweet := c.ReadLine()
+			text := c.ReadLine()
 
-			service.PublishTweet(tweet)
+			newTweet := domain.NewTweet(user, text)
+
+			
+			service.PublishTweet(newTweet)
 
 			c.Print("Tweet sent\n")
 
@@ -39,7 +47,7 @@ func main() {
 
 			tweet := service.GetTweet()
 
-			c.Println(tweet)
+			c.Println(tweet.User, tweet.Text, tweet.Date)
 
 			return
 		},
