@@ -16,7 +16,6 @@ func main() {
 		Name: "publishTweet",
 		Help: "Publishes a tweet",
 		Func: func(c *ishell.Context) {
-			var err error;
 			defer c.ShowPrompt(true)
 
 			c.Print("Write your username: ")
@@ -28,9 +27,8 @@ func main() {
 			text := c.ReadLine()
 
 			newTweet := domain.NewTweet(user, text)
-
-			
-			err = service.PublishTweet(newTweet)
+		
+			err := service.PublishTweet(newTweet)
 
 			if err != nil{
 				c.Print(err.Error())
