@@ -6,15 +6,21 @@ import (
 	"fmt"
 )
 
-var tweet *domain.Tweet
-var tweets []*domain.Tweet 
-
-
-func InitializeService(){
-	tweets = make([]*domain.Tweet, 0)
+type TweetManager struct {
+	tweet *domain.Tweet
+	tweets []*domain.Tweet
+	mapTweetsByUser map[string][]*domain.Tweet
 }
 
-func PublishTweet(t *domain.Tweet) (int, error) {
+func NewTweetManager() *TweetManager{
+	var tm TweetManager
+	tm.tweets = make([]*domain.Tweet, 0)
+	tm.mapTweetsByUser = make(map[string][]*domain.Tweet)
+
+	return &tm
+}
+
+func (tm *TweetManager) PublishTweet(t *domain.Tweet) (int, error) {
 	var err error
 
 	if t.User == "" {
@@ -32,39 +38,52 @@ func PublishTweet(t *domain.Tweet) (int, error) {
 		return -1, err
 	}
 
-	t.Id = len(tweets) + 1
+	t.Id = len(tm.tweets) + 1
 
-	tweets = append(tweets, t)
+	_, existe := tm.mapTweetsByUser[t.User]
+
+	if existe {
+		tm.mapTweetsByUser[t.User] = append(tm.mapTweetsByUser[t.User], t)
+	} else {
+		tm.mapTweetsByUser[t.User] = make([]*domain.Tweet, 0)
+		tm.mapTweetsByUser[t.User] = append(tm.mapTweetsByUser[t.User], t)
+	}
+
+	tm.tweets = append(tm.tweets, t)
 
 	return t.Id, nil
 
 }
 
-func GetTweet() *domain.Tweet {
-	return tweets[len(tweets)-1];
+func (tm *TweetManager) GetTweet() *domain.Tweet {
+	return tm.tweets[len(tm.tweets)-1];
 }
 
-func GetTweetById(id int) *domain.Tweet {
-	if id > 0 && id <= len(tweets){
-		tweet := tweets[id - 1]
+func (tm *TweetManager) GetTweetById(id int) *domain.Tweet {
+	if id > 0 && id <= len(tm.tweets){
+		tweet := tm.tweets[id - 1]
 		return tweet
 	}
 	
 	return nil
 }
 
-func GetTweets() []*domain.Tweet {
-	return tweets;
+func (tm *TweetManager) GetTweets() []*domain.Tweet {
+	return tm.tweets;
 }
 
-func CountTweetsByUser(user string) int {
+func (tm *TweetManager) CountTweetsByUser(user string) int {
 	var count int
 
-	for _, value := range tweets {
+	for _, value := range tm.tweets {
 		if value.User == user {
 			count ++
 		}
 	}
 
 	return count
+}
+
+func (tm *TweetManager) GetTweetsByUser(user string) []*domain.Tweet {
+	return tm.mapTweetsByUser[user]
 }

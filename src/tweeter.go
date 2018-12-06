@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-
+	tweetManager := service.NewTweetManager()
 	shell := ishell.New()
 	shell.SetPrompt("Tweeter >> ")
 	shell.Print("Type 'help' to know commands\n")
@@ -29,7 +29,7 @@ func main() {
 
 			newTweet := domain.NewTweet(user, text)
 		
-			_, err := service.PublishTweet(newTweet)
+			_, err := tweetManager.PublishTweet(newTweet)
 
 			if err != nil{
 				c.Print(err.Error())
@@ -48,10 +48,10 @@ func main() {
 
 			defer c.ShowPrompt(true)
 
-			tweet := service.GetTweet()
+			tweet := tweetManager.GetTweet()
 
 			if tweet != nil {
-				c.Println(tweet.Id, tweet.User, tweet.Text, tweet.Date)
+				c.Println(tweet)
 			} else{
 				c.Println("No hay tweets creados.")
 			}
@@ -67,15 +67,12 @@ func main() {
 
 			defer c.ShowPrompt(true)
 
-			tweets := service.GetTweets()
+			tweets := tweetManager.GetTweets()
 
 			if tweets != nil {
 				for _, valor := range tweets {
-					c.Println(valor.Id, valor.User, valor.Text, valor.Date)
+					c.Println(valor)
 				}
-				// for index := 0; index < len(tweets); index++ {
-				// 	c.Println(tweets[index].Id, tweets[index].User, tweets[index].Text, tweets[index].Date)
-				// }
 			} else{
 				c.Println("No hay tweets creados.")
 			}
@@ -95,10 +92,10 @@ func main() {
 
 			id, _ := strconv.Atoi(c.ReadLine())
 
-			tweet := service.GetTweetById(id)
+			tweet := tweetManager.GetTweetById(id)
 
 			if tweet != nil {
-				c.Println(tweet.Id, tweet.User, tweet.Text, tweet.Date)
+				c.Println(tweet)
 			} else{
 				c.Println("ID inexistente.")
 			}
@@ -118,12 +115,37 @@ func main() {
 
 			user := c.ReadLine()
 
-			count := service.CountTweetsByUser(user)
+			count := tweetManager.CountTweetsByUser(user)
 
 			if count > 0 {
 				c.Println(count)
 			} else{
 				c.Println("El usuario no posee tweets.")
+			}
+
+			return
+		},
+	})
+
+	shell.AddCmd(&ishell.Cmd{
+		Name: "getTweetsByUserName",
+		Help: "Muestra todos los tweets de un usuario",
+		Func: func(c *ishell.Context) {
+
+			defer c.ShowPrompt(true)
+
+			c.Print("Write your username: ")
+
+			user := c.ReadLine()
+
+			tweets := tweetManager.GetTweetsByUser(user)
+
+			if tweets != nil {
+				for _, valor := range tweets {
+					c.Println(valor)
+				}
+			} else{
+				c.Println("Usuario inexistente o no contiene tweets.")
 			}
 
 			return

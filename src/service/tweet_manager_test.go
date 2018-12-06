@@ -21,16 +21,17 @@ func isValidTweet(tweet1 *domain.Tweet, tweet2 *domain.Tweet) bool{
 func TestPublishedTweetIsSaved(t *testing.T){
 
 	// Initialization
+	tweetManager := service.NewTweetManager()
 	var tweet *domain.Tweet
 	user := "grupoesfera"
 	text := "This is my first tweet"
 	tweet = domain.NewTweet(user, text)
 
 	// Operation
-	service.PublishTweet(tweet)
+	tweetManager.PublishTweet(tweet)
 
 	// Validation
-	publishedTweet := service.GetTweet()
+	publishedTweet := tweetManager.GetTweet()
 
 	if publishedTweet.User != user && publishedTweet.Text != text {
 		t.Errorf("Expected tweet is %s: %s \nbut is %s: %s", user, text, publishedTweet.User, publishedTweet.Text)
@@ -43,6 +44,7 @@ func TestPublishedTweetIsSaved(t *testing.T){
 
 func TestWithoutUserIsNotPublished(t *testing.T){
 	// Initilization
+	tweetManager := service.NewTweetManager()
 	var tweet *domain.Tweet
 
 	var user string
@@ -52,7 +54,7 @@ func TestWithoutUserIsNotPublished(t *testing.T){
 
 	// Operation
 	var err error
-	_, err = service.PublishTweet(tweet)
+	_, err = tweetManager.PublishTweet(tweet)
 
 	// Validation
 	if err != nil && err.Error() != "user is required" {
@@ -62,6 +64,7 @@ func TestWithoutUserIsNotPublished(t *testing.T){
 
 func TestTweetWithoutTextIsNotPublished(t *testing.T){
 	// Initilization
+	tweetManager := service.NewTweetManager()
 	var tweet *domain.Tweet
 
 	user := "Alejandro"
@@ -71,7 +74,7 @@ func TestTweetWithoutTextIsNotPublished(t *testing.T){
 
 	// Operation
 	var err error
-	_, err = service.PublishTweet(tweet)
+	_, err = tweetManager.PublishTweet(tweet)
 
 	// Validation
 	if err != nil && err.Error() != "text is required" {
@@ -81,6 +84,7 @@ func TestTweetWithoutTextIsNotPublished(t *testing.T){
 
 func TestTweetWhichExceeding140CharactersIsNotPublished(t *testing.T){
 	// Initilization
+	tweetManager := service.NewTweetManager()
 	var tweet *domain.Tweet
 
 	user := "Alejandro"
@@ -90,7 +94,7 @@ func TestTweetWhichExceeding140CharactersIsNotPublished(t *testing.T){
 
 	// Operation
 	var err error
-	_, err = service.PublishTweet(tweet)
+	_, err = tweetManager.PublishTweet(tweet)
 
 	// Validation
 	if err != nil && err.Error() != "text greater than 140 characters" {
@@ -101,7 +105,7 @@ func TestTweetWhichExceeding140CharactersIsNotPublished(t *testing.T){
 func TestCanPublishAndRetrieveMoreThanOneTweet(t *testing.T){
 	// Initialization
 
-	service.InitializeService()
+	tweetManager := service.NewTweetManager()
 	var tweet, secondTweet *domain.Tweet // Fill de tweets with data
 
 	user1 := "Alejandro"
@@ -114,11 +118,11 @@ func TestCanPublishAndRetrieveMoreThanOneTweet(t *testing.T){
 	secondTweet = domain.NewTweet(user2, text2)
 
 	// Operation
-	service.PublishTweet(tweet)
-	service.PublishTweet(secondTweet)
+	tweetManager.PublishTweet(tweet)
+	tweetManager.PublishTweet(secondTweet)
 
 	// Validation
-	publishedTweets := service.GetTweets()
+	publishedTweets := tweetManager.GetTweets()
 
 	if len(publishedTweets) != 2 {
 		t.Errorf("Expected size is 2 but was %d", len(publishedTweets))
@@ -140,7 +144,7 @@ func TestCanPublishAndRetrieveMoreThanOneTweet(t *testing.T){
 func TestCanRetrieveTweetById(t *testing.T){
 	// Initialization
 
-	service.InitializeService()
+	tweetManager := service.NewTweetManager()
 	var tweet *domain.Tweet // Fill de tweets with data
 	var id int
 
@@ -150,10 +154,10 @@ func TestCanRetrieveTweetById(t *testing.T){
 	tweet = domain.NewTweet(user, text)
 
 	// Operation
-	id, _ = service.PublishTweet(tweet)
+	id, _ = tweetManager.PublishTweet(tweet)
 
 	// Validation
-	publishedTweet := service.GetTweetById(id)
+	publishedTweet := tweetManager.GetTweetById(id)
 
 	if !isValidTweet(tweet, publishedTweet){
 		return
@@ -163,7 +167,7 @@ func TestCanRetrieveTweetById(t *testing.T){
 func TestCanCountTheTweetSentByAnUser(t *testing.T){
 	// Initialization
 
-	service.InitializeService()
+	tweetManager := service.NewTweetManager()
 
 	var tweet, secondTweet, thirdTweet *domain.Tweet // Fill de tweets with data
 
@@ -176,15 +180,52 @@ func TestCanCountTheTweetSentByAnUser(t *testing.T){
 	secondTweet = domain.NewTweet(user, text)
 	thirdTweet = domain.NewTweet(anotherUser, text)
 
-	service.PublishTweet(tweet)
-	service.PublishTweet(secondTweet)
-	service.PublishTweet(thirdTweet)
+	tweetManager.PublishTweet(tweet)
+	tweetManager.PublishTweet(secondTweet)
+	tweetManager.PublishTweet(thirdTweet)
 
 	// Operation
-	count := service.CountTweetsByUser(user)
+	count := tweetManager.CountTweetsByUser(user)
 
 	// Validation
 	if count != 2 {
 		t.Errorf("Expected count is 2 but was %d", count)
 	}
+}
+
+func TestCanRetrieveTheTweetsSentByAnUser(t *testing.T) {
+    // Initialization
+    tweetManager := service.NewTweetManager()
+    var tweet, secondTweet, thirdTweet *domain.Tweet
+    user := "grupoesfera"
+    anotherUser := "nick"
+    text := "This is my first tweet"
+    secondText := "This is my second tweet"
+    tweet = domain.NewTweet(user, text)
+    secondTweet = domain.NewTweet(user, secondText)
+	thirdTweet = domain.NewTweet(anotherUser, text)
+	
+	// publish the 3 tweets
+
+	tweetManager.PublishTweet(tweet)
+	tweetManager.PublishTweet(secondTweet)
+	tweetManager.PublishTweet(thirdTweet)
+
+    // Operation
+    tweets := tweetManager.GetTweetsByUser(user)
+
+    // Validation
+    if len(tweets) != 2 { /* handle error */ }
+    firstPublishedTweet := tweets[0]
+	secondPublishedTweet := tweets[1]
+	
+	if !isValidTweet(tweet, firstPublishedTweet){
+		return
+	}
+
+	if !isValidTweet(secondTweet, secondPublishedTweet){
+		return
+	}
+
+    // check if isValidTweet for firstPublishedTweet and secondPublishedTweet
 }
