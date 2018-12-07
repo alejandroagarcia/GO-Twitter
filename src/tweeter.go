@@ -1,14 +1,18 @@
 package main
 
 import (
-	"github.com/abiosoft/ishell"
-	"github.com/alejandroagarcia/GO-Twitter/src/service"
-	"github.com/alejandroagarcia/GO-Twitter/src/domain"
 	"strconv"
+	"time"
+
+	"github.com/abiosoft/ishell"
+	"github.com/alejandroagarcia/GO-Twitter/src/domain"
+	"github.com/alejandroagarcia/GO-Twitter/src/service"
 )
 
 func main() {
-	tweetManager := service.NewTweetManager()
+	var tweetWriter service.TweetWriter
+	tweetWriter = service.NewFileTweetWriter()
+	tweetManager := service.NewTweetManager(tweetWriter)
 	shell := ishell.New()
 	shell.SetPrompt("Tweeter >> ")
 	shell.Print("Type 'help' to know commands\n")
@@ -17,23 +21,75 @@ func main() {
 		Name: "publishTweet",
 		Help: "Publishes a tweet",
 		Func: func(c *ishell.Context) {
+			var newTweet domain.Tweet
+
 			defer c.ShowPrompt(true)
 
-			c.Print("Write your username: ")
+			choice := c.MultiChoice([]string{
+				"TextTweet",
+				"ImageTweet",
+				"QuoteTweet",
+				"Salir",
+			}, "Qué tipo de Tweet quieres crear?")
 
-			user := c.ReadLine()
+			if choice == 0 {
+				c.Print("Write your username: ")
 
-			c.Print("Write your tweet: ")
+				user := c.ReadLine()
 
-			text := c.ReadLine()
+				c.Print("Write your tweet: ")
 
-			newTweet := domain.NewTweet(user, text)
-		
+				text := c.ReadLine()
+
+				newTweet = domain.NewTextTweet(user, text)
+
+			} else if choice == 1 {
+				c.Print("Write your username: ")
+
+				user := c.ReadLine()
+
+				c.Print("Write your tweet: ")
+
+				text := c.ReadLine()
+
+				c.Print("Write your link image: ")
+
+				link := c.ReadLine()
+
+				newTweet = domain.NewImageTweet(user, text, link)
+
+			} else if choice == 2 {
+				c.Print("Escribe el ID del Tweet a citar: ")
+
+				id, _ := strconv.Atoi(c.ReadLine())
+
+				quotedTweet := tweetManager.GetTweetById(id)
+
+				if quotedTweet == nil {
+					c.Println("ID inexistente.")
+					time.Sleep(2000)
+					return
+				}
+
+				c.Print("Write your username: ")
+
+				user := c.ReadLine()
+
+				c.Print("Write your tweet: ")
+
+				text := c.ReadLine()
+
+				newTweet = domain.NewQuoteTweet(user, text, quotedTweet)
+
+			} else {
+				return
+			}
+
 			_, err := tweetManager.PublishTweet(newTweet)
 
-			if err != nil{
+			if err != nil {
 				c.Print(err.Error())
-			} else{
+			} else {
 				c.Print("Tweet sent\n")
 			}
 
@@ -52,7 +108,7 @@ func main() {
 
 			if tweet != nil {
 				c.Println(tweet)
-			} else{
+			} else {
 				c.Println("No hay tweets creados.")
 			}
 
@@ -73,7 +129,7 @@ func main() {
 				for _, valor := range tweets {
 					c.Println(valor)
 				}
-			} else{
+			} else {
 				c.Println("No hay tweets creados.")
 			}
 
@@ -96,8 +152,40 @@ func main() {
 
 			if tweet != nil {
 				c.Println(tweet)
-			} else{
+			} else {
 				c.Println("ID inexistente.")
+			}
+
+			return
+		},
+	})
+
+	shell.AddCmd(&ishell.Cmd{
+		Name: "getTweetsContainText",
+		Help: "Obtiene los tweets que contienen la palabra indicada",
+		Func: func(c *ishell.Context) {
+			var searchResult = make(chan domain.Tweet)
+			var quit = make(chan string)
+
+			defer c.ShowPrompt(true)
+
+			c.Print("Ingrese la palabra: ")
+			query := c.ReadLine()
+
+			tweetManager.SearchTweetsContaining(query, searchResult, quit)
+
+			for {
+				select {
+				case tweet := <-searchResult:
+					c.Println(tweet)
+				case results := <-quit:
+					if results == "finishedEmpty" {
+						c.Println("No se encontraron coincidencias.")
+					}
+
+					return
+
+				}
 			}
 
 			return
@@ -119,7 +207,7 @@ func main() {
 
 			if count > 0 {
 				c.Println(count)
-			} else{
+			} else {
 				c.Println("El usuario no posee tweets.")
 			}
 
@@ -144,7 +232,7 @@ func main() {
 				for _, valor := range tweets {
 					c.Println(valor)
 				}
-			} else{
+			} else {
 				c.Println("Usuario inexistente o no contiene tweets.")
 			}
 
