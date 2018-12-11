@@ -7,10 +7,10 @@ import (
 
 type ImageTweet struct {
 	TextTweet
-	Url string
+	Url string `json "url"`
 }
 
-func NewImageTweet (user string, text string, url string) *ImageTweet{
+func NewImageTweet(user string, text string, url string) *ImageTweet {
 	time := time.Now()
 	newTweet := ImageTweet{TextTweet{User: user, Text: text, Date: &time}, url}
 	return &newTweet

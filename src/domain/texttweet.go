@@ -7,8 +7,8 @@ import (
 
 type TextTweet struct {
 	Id   int
-	User string
-	Text string
+	User string `json: "user"`
+	Text string `json: "text"`
 	Date *time.Time
 }
 

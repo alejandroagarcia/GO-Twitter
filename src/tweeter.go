@@ -7,12 +7,28 @@ import (
 	"github.com/abiosoft/ishell"
 	"github.com/alejandroagarcia/GO-Twitter/src/domain"
 	"github.com/alejandroagarcia/GO-Twitter/src/service"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
+
 	var tweetWriter service.TweetWriter
 	tweetWriter = service.NewFileTweetWriter()
 	tweetManager := service.NewTweetManager(tweetWriter)
+
+	go func(tm *service.TweetManager) {
+		router := gin.Default()
+
+		router.GET("/tweet/:id", tweetManager.GetTweetREST)
+		router.GET("/tweets", tweetManager.GetTweetsREST)
+		router.GET("/tweets/:user", tweetManager.GetTweetsByUserREST)
+		router.POST("/tweet/text", tweetManager.CrearTextTweetREST)
+		router.POST("/tweet/image", tweetManager.CrearImageTweetREST)
+		router.POST("/tweet/quote", tweetManager.CrearQuoteTweetREST)
+
+		router.Run()
+	}(tweetManager)
+
 	shell := ishell.New()
 	shell.SetPrompt("Tweeter >> ")
 	shell.Print("Type 'help' to know commands\n")
